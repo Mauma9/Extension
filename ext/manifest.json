@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Teste",
+    "version": "0.0.1",
+    "description": "teste para o manifest para extensão da atividade de bootcamp",
+    "action":{
+        "default_popup":"popup.html",
+        "default_title":"teste",
+        "default_icon": {
+            "16": "imgs/icon.png",
+            "48": "imgs/icon.png",
+            "128": "imgs/icon.png"
+        }
+    },
+     "icons":{
+            "16": "imgs/icon.png",
+            "48": "imgs/icon.png",
+            "128": "imgs/icon.png"
+        }
+}
