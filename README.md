@@ -2,7 +2,7 @@
 
 Esta é uma extensão simples para o Google Chrome, desenvolvida como parte do Desafio de Entrega Inicial do Bootcamp II. O objetivo é demonstrar o entendimento da arquitetura do Manifest V3, incluindo a criação de um popup, um service worker em segundo plano e a interação entre eles.
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 * **Popup Interativo:** Uma pequena janela que permite ao usuário interagir com a extensão.
 * **Mudança de Texto:** Clique no botão "TESTE" para alterar o título e no "RESET" para voltar ao original.
