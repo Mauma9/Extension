@@ -1,16 +1,23 @@
 {
   "name": "ext",
   "version": "1.2.0",
-  "description": "",
+  "description": "Extensão Chrome (MV3) para o Bootcamp II com testes E2E.", 
   "type": "module",
   "scripts": {
     "build": "node scripts/build-extensions.mjs",
     "test:e2e": "playwright test",
-    "test": "npm run build && npm run test:e2e"
+    "test": "npm run build && npm run test:e2e",
+    "ci": "npm ci && npm run test" 
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [ 
+    "chrome-extension",
+    "manifest-v3",
+    "playwright",
+    "docker",
+    "ci-cd"
+  ],
+  "author": "Seu Nome ou Usuário GitHub", 
+  "license": "MIT", 
   "devDependencies": {
     "@playwright/test": "^1.45.3",
     "@types/node": "^20.14.12",
