@@ -42,7 +42,11 @@ jobs:
       - name: Executar testes Playwright # Roda os testes E2E
         run: npm run test:e2e
         working-directory: ./ext # Executa dentro de 'ext'
-
+      
+      - name: Listar arquivos após testes # DEBUG: Ver onde o relatório foi parar
+        run: ls -R ext
+        if: always() # Executa mesmo se os testes falharem (útil para debug)
+      
       - name: Publicar artefato do relatório Playwright # Faz upload do relatório HTML
         # always() garante que isso rode mesmo se os testes falharem
         if: always() 
