@@ -1,0 +1,15 @@
+services:
+  e2e:
+    build: 
+      context: . # Usa o diretório atual (C:\BootcampII) como contexto de build
+      dockerfile: Dockerfile # Especifica o nome do Dockerfile
+    image: bootcamp/ext-e2e:latest # Nomeia a imagem construída
+    environment:
+      - CI=true # Variável de ambiente útil para scripts/testes, se necessário
+    volumes:
+      # Monta o diretório 'ext' local em '/app/ext' no contêiner
+      # Isso permite ver relatórios de teste gerados dentro do contêiner localmente
+      - ./ext:/app/ext 
+    working_dir: /app/ext # Define o diretório de trabalho dentro do contêiner
+    command: npm run test:e2e # Sobrescreve o CMD do Dockerfile para EXECUTAR APENAS os testes
+    shm_size: '2gb' # Recomendado para estabilidade do Chromium no Docker (memória compartilhada)

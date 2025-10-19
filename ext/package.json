@@ -1,13 +1,19 @@
 {
   "name": "ext",
   "version": "1.2.0",
+  "description": "",
+  "type": "module",
   "scripts": {
     "build": "node scripts/build-extensions.mjs",
-    "test:e2e": "playwright test --reporter-list. hmtl",
+    "test:e2e": "playwright test",
     "test": "npm run build && npm run test:e2e"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
+    "@playwright/test": "^1.45.3",
+    "@types/node": "^20.14.12",
     "archiver": "^7.0.1"
   }
 }

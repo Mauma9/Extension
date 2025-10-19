@@ -1,0 +1,57 @@
+name: CI # Nome do Workflow
+
+on:
+  push:
+    branches: [ main ] # Executa em pushes para a branch main
+  pull_request:
+    branches: [ main ] # Executa em pull requests direcionados à main
+
+jobs:
+  test-build: # Nome do job
+    runs-on: ubuntu-latest # Usa um executor padrão do GitHub (baseado em Linux)
+
+    steps:
+      - name: Checkout do código # Baixa o código do seu repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js v20 # Configura o ambiente Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Habilita o cache de dependências npm
+          cache-dependency-path: ext/package-lock.json # Especifica o local do arquivo de lock
+
+      - name: Instalar Dependências em ext/ # Instala os pacotes npm
+        run: npm ci
+        working-directory: ./ext # Executa o comando dentro da pasta 'ext'
+
+      # Nota: A action do Playwright geralmente instala navegadores/dependências automaticamente
+      # - name: Instalar Navegadores Playwright e Dependências
+      #   run: npx playwright install --with-deps chromium
+      #   working-directory: ./ext
+
+      - name: Build da extensão # Executa o script de build
+        run: npm run build
+        working-directory: ./ext # Executa dentro de 'ext'
+
+      - name: Executar testes Playwright # Roda os testes E2E
+        run: npm run test:e2e
+        working-directory: ./ext # Executa dentro de 'ext'
+
+      - name: Publicar artefato do relatório Playwright # Faz upload do relatório HTML
+        # always() garante que isso rode mesmo se os testes falharem
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report # Nome do artefato
+          path: ext/playwright-report/ # Caminho correto para a pasta do relatório
+          retention-days: 7 # Manter relatórios por 7 dias
+
+      - name: Publicar artefato do ZIP da Extensão # Faz upload do arquivo .zip
+        # Only upload zip if build and tests succeeded
+        if: success() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip # Nome do artefato
+          path: ext/dist/extension.zip # Caminho correto para o arquivo zip
+          retention-days: 30 # Manter zip por 30 dias

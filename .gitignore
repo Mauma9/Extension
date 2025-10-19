@@ -1,5 +1,24 @@
-# Ignora pastas de dependências
-node_modules/
+# Dependencies
+/node_modules/
+/ext/node_modules/
 
-# Ignora resultados de teste
-test-results/
+# Build output
+/ext/dist/
+
+# Test results and reports
+/ext/playwright-report/
+/ext/test-results/
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: Ignore IDE directories
+.vscode/
+.idea/
