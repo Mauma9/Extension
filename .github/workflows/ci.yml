@@ -1,16 +1,4 @@
-name: CI # Nome do Workflow
-
-on:
-  push:
-    branches: [ main ] # Executa em pushes para a branch main
-  pull_request:
-    branches: [ main ] # Executa em pull requests direcionados à main
-
-jobs:
-  test-build: # Nome do job
-    runs-on: ubuntu-latest # Usa um executor padrão do GitHub (baseado em Linux)
-
-    steps:
+steps:
       - name: Checkout do código # Baixa o código do seu repositório
         uses: actions/checkout@v4
 
@@ -25,10 +13,11 @@ jobs:
         run: npm ci
         working-directory: ./ext # Executa o comando dentro da pasta 'ext'
 
-      # Nota: A action do Playwright geralmente instala navegadores/dependências automaticamente
-      # - name: Instalar Navegadores Playwright e Dependências
-      #   run: npx playwright install --with-deps chromium
-      #   working-directory: ./ext
+      
+      - name: Instalar Navegadores Playwright # Baixa o Chromium necessário
+        run: npx playwright install --with-deps chromium
+        working-directory: ./ext # Executa dentro de 'ext'
+ 
 
       - name: Build da extensão # Executa o script de build
         run: npm run build
@@ -38,20 +27,4 @@ jobs:
         run: npm run test:e2e
         working-directory: ./ext # Executa dentro de 'ext'
 
-      - name: Publicar artefato do relatório Playwright # Faz upload do relatório HTML
-        # always() garante que isso rode mesmo se os testes falharem
-        if: always() 
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report # Nome do artefato
-          path: ext/playwright-report/ # Caminho correto para a pasta do relatório
-          retention-days: 7 # Manter relatórios por 7 dias
-
-      - name: Publicar artefato do ZIP da Extensão # Faz upload do arquivo .zip
-        # Only upload zip if build and tests succeeded
-        if: success() 
-        uses: actions/upload-artifact@v4
-        with:
-          name: extension-zip # Nome do artefato
-          path: ext/dist/extension.zip # Caminho correto para o arquivo zip
-          retention-days: 30 # Manter zip por 30 dias
+      # ... (Restante dos passos de upload de artefatos) ...
