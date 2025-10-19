@@ -1,0 +1,5 @@
+# Ignora pastas de dependências
+node_modules/
+
+# Ignora resultados de teste
+test-results/
