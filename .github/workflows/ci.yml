@@ -1,4 +1,22 @@
-steps:
+# Nome do Workflow (aparece na aba Actions do GitHub)
+name: CI 
+
+# Gatilhos: Quando este workflow deve rodar
+on:
+  push:
+    branches: [ main ] # Em pushes para a branch main
+  pull_request:
+    branches: [ main ] # Em pull requests para a branch main
+
+# Definição dos trabalhos (jobs) que o workflow executará
+jobs:
+  # Nome do job (pode ser qualquer nome descritivo)
+  test-build: 
+    # Em qual tipo de máquina virtual o job rodará
+    runs-on: ubuntu-latest 
+
+    # Lista de passos sequenciais que o job executará
+    steps:
       - name: Checkout do código # Baixa o código do seu repositório
         uses: actions/checkout@v4
 
@@ -13,11 +31,9 @@ steps:
         run: npm ci
         working-directory: ./ext # Executa o comando dentro da pasta 'ext'
 
-      
       - name: Instalar Navegadores Playwright # Baixa o Chromium necessário
         run: npx playwright install --with-deps chromium
         working-directory: ./ext # Executa dentro de 'ext'
- 
 
       - name: Build da extensão # Executa o script de build
         run: npm run build
@@ -27,4 +43,20 @@ steps:
         run: npm run test:e2e
         working-directory: ./ext # Executa dentro de 'ext'
 
-      # ... (Restante dos passos de upload de artefatos) ...
+      - name: Publicar artefato do relatório Playwright # Faz upload do relatório HTML
+        # always() garante que isso rode mesmo se os testes falharem
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report # Nome do artefato
+          path: ext/playwright-report/ # Caminho correto para a pasta do relatório
+          retention-days: 7 # Manter relatórios por 7 dias
+
+      - name: Publicar artefato do ZIP da Extensão # Faz upload do arquivo .zip
+        # Only upload zip if build and tests succeeded
+        if: success() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip # Nome do artefato
+          path: ext/dist/extension.zip # Caminho correto para o arquivo zip
+          retention-days: 30 # Manter zip por 30 dias
