@@ -1,24 +1,12 @@
-# Dependencies
-/node_modules/
-/ext/node_modules/
+# Dependências
+node_modules/
+apps/api/node_modules/
+apps/web/node_modules/
 
-# Build output
-/ext/dist/
+# Build local
+apps/web/dist/
+apps/web/playwright-report/
+apps/web/test-results/
 
-# Test results and reports
-/ext/playwright-report/
-/ext/test-results/
-
-# Log files
+# Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Optional: Ignore IDE directories
-.vscode/
-.idea/

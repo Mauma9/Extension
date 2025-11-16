@@ -1,15 +1,35 @@
+# Versão do Docker Compose
+version: '3.8'
+
+# Define os serviços (contêineres)
 services:
-  e2e:
-    build: 
-      context: . # Usa o diretório atual (C:\BootcampII) como contexto de build
-      dockerfile: Dockerfile # Especifica o nome do Dockerfile
-    image: bootcamp/ext-e2e:latest # Nomeia a imagem construída
+
+  # Serviço 1: Nosso Backend (Proxy da Open-Meteo)
+  api:
+    # Diz ao Compose para construir a imagem usando o Dockerfile da pasta ./apps/api
+    build: ./apps/api
+    container_name: bootcamp-api
+    ports:
+      # Mapeia a porta 3000 do contêiner para a porta 3000 da sua máquina (host)
+      # Formato: "HOST:CONTAINER"
+      - "3000:3000"
+    # Reinicia o contêiner automaticamente se ele falhar
+    restart: unless-stopped
+
+  # Serviço 2: Nosso Frontend (PWA Nginx)
+  web:
+    # Constrói a imagem usando o Dockerfile da pasta ./apps/web
+    build: ./apps/web
+    container_name: bootcamp-web
+    ports:
+      # Mapeia a porta 80 (padrão Nginx) do contêiner para a porta 8080 da sua máquina (host)
+      - "8080:80"
     environment:
-      - CI=true # Variável de ambiente útil para scripts/testes, se necessário
-    volumes:
-      # Monta o diretório 'ext' local em '/app/ext' no contêiner
-      # Isso permite ver relatórios de teste gerados dentro do contêiner localmente
-      - ./ext:/app/ext 
-    working_dir: /app/ext # Define o diretório de trabalho dentro do contêiner
-    command: npm run test:e2e # Sobrescreve o CMD do Dockerfile para EXECUTAR APENAS os testes
-    shm_size: '2gb' # Recomendado para estabilidade do Chromium no Docker (memória compartilhada)
+      # Passa a URL da API para o PWA (Vite)
+      # Dentro da rede Docker, o 'web' não usa 'localhost',
+      # ele usa o nome do serviço: 'http://api:3000'
+      - VITE_API_URL=http://api:3000
+    # Garante que o serviço 'api' inicie ANTES do serviço 'web'
+    depends_on:
+      - api
+    restart: unless-stopped
