@@ -1,16 +1,19 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Frontend PWA (Vite) para o Bootcamp de Clima",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo \"Nenhum teste unitário configurado\" && exit 0",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
-    "@types/node": "^24.10.1",
-    "vite": "^7.2.2"
+    "@playwright/test": "^1.45.3",
+    "@types/node": "^20.14.12",
+    "vite": "^5.3.5"
   }
 }
