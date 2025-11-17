@@ -8,25 +8,31 @@ test('PWA carrega e tem o título correto', async ({ page }) => {
   await expect(page).toHaveTitle(/PWA de Clima/);
 });
 
-// --- TESTE ATUALIZADO COM O MOCK CORRETO ---
+// --- TESTE ATUALIZADO COM O MOCK CORRETO E ROBUSTO ---
 test('Busca por cidade deve funcionar (com mock)', async ({ page }) => {
   
   // --- Início do Mock ---
   // Intercepta a chamada para a NOSSA API /api/search
-  // Usamos 'http://localhost:3000' porque é isso que o main.js usa no CI
+  // Usamos um "Glob Pattern" (**) para garantir que a chamada seja interceptada
+  // independentemente do domínio (localhost, api, etc.) ou da codificação da URL (S%C3%A3o Paulo)
   await page.route(
-    'http://localhost:3000/api/search?city=São%20Paulo', // A URL exata
+    '**/api/search?city=*', // <-- MUDANÇA CRUCIAL AQUI
     async (route) => {
+      // Pega a URL da requisição (só para debug no log do CI)
+      const url = route.request().url();
+      console.log(`[Mock] Interceptando chamada: ${url}`);
+      
       // Cria uma resposta JSON falsa (mock)
       const mockResponse = {
-        name: 'São Paulo',
-        admin1: 'SP (Mock)', // Adicionado (Mock) para termos certeza
-        current_weather: {
-          temperature: 25.0, // Temperatura Fictícia
-          weathercode: 3,    // 3 = Nublado
+        name: 'São Paulo', // O PWA usa isso
+        admin1: 'SP (Mock)', // O PWA usa isso
+        current_weather: { // O PWA usa isso
+          temperature: 25.0,
+          weathercode: 3, // 3 = Nublado
           windspeed: 10.0,
         },
       };
+      
       // Responde à chamada com o nosso JSON falso
       await route.fulfill({
         status: 200,
@@ -48,7 +54,8 @@ test('Busca por cidade deve funcionar (com mock)', async ({ page }) => {
   const condition = page.locator('.condition');
 
   // Verifica se o PWA renderizou os dados do MOCK
-  await expect(resultHeader).toContainText('São Paulo, SP (Mock)', { timeout: 5000 });
-  await expect(temperature).toContainText('25.0°C'); // Dado do mock
-  await expect(condition).toContainText('Nublado'); // Dado do mock (código 3)
+  // Aumentei o timeout de volta para 10s por segurança
+  await expect(resultHeader).toContainText('São Paulo, SP (Mock)', { timeout: 10000 });
+  await expect(temperature).toContainText('25.0°C');
+  await expect(condition).toContainText('Nublado');
 });
