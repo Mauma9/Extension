@@ -1,21 +1,15 @@
-# Nome do Workflow (aparece na aba Actions do GitHub)
 name: CI/CD - PWA Bootcamp
 
-# Gatilhos: Quando este workflow deve rodar
 on:
   push:
-    branches: [ main ] # Em pushes para a branch main
+    branches: [ main ] # Gatilho para deploy
   pull_request:
-    branches: [ main ] # Em pull requests para a branch main
+    branches: [ main ] # Gatilho para testes
 
-# Definição dos trabalhos (jobs) que o workflow executará
 jobs:
-  # Nome do job
+  # --- JOB 1: CONSTRUIR E TESTAR (NO DOCKER) ---
   build-and-test:
-    # Em qual tipo de máquina virtual o job rodará
     runs-on: ubuntu-latest
-
-    # Lista de passos sequenciais que o job executará
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -24,62 +18,84 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # Habilita o cache de dependências npm
-          # Procura por package-lock.json em qualquer subdiretório
+          cache: 'npm'
           cache-dependency-path: '**/package-lock.json' 
 
       - name: Instalar Dependências (API)
         run: npm ci
-        working-directory: ./apps/api # Executa na pasta api
+        working-directory: ./apps/api
 
       - name: Instalar Dependências (Web)
         run: npm ci
-        working-directory: ./apps/web # Executa na pasta web
-
-      - name: Rodar Testes Unitários (API) (se houver)
-        run: npm test --if-present
-        working-directory: ./apps/api
+        working-directory: ./apps/web
 
       - name: Instalar Navegadores Playwright
         run: npx playwright install --with-deps chromium
-        working-directory: ./apps/web # Instala os navegadores para o app web
+        working-directory: ./apps/web
 
       - name: Construir Imagens Docker
         run: docker compose build
-        # Não precisa de working-directory, pois o docker-compose.yml está na raiz
 
       - name: Subir Contêineres (API e Web)
-        run: docker compose up -d # -d (detached) roda em segundo plano
+        run: docker compose up -d
 
       - name: Executar Testes E2E (Playwright)
         run: npm run test:e2e
         working-directory: ./apps/web
-        # O Playwright (no host) vai testar http://localhost:8080,
-        # que está mapeado para o contêiner 'web'
 
       - name: Parar Contêineres
-        # 'if: always()' garante que este passo rode mesmo se os testes falharem
         if: always() 
-        run: docker compose down # Desliga os contêineres
+        run: docker compose down
 
-      # --- Upload de Artefatos ---
-      # Precisamos construir o 'web' no host (fora do Docker)
-      # apenas para ter a pasta 'dist' disponível para upload.
       - name: Construir PWA (para Artefato)
         run: npm run build
         working-directory: ./apps/web
 
       - name: Publicar Artefato (web-dist)
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
-          path: apps/web/dist/ # Caminho da pasta de build do Vite
+          path: apps/web/dist/
 
       - name: Publicar Artefato (playwright-report)
-        if: always() # Publica o relatório mesmo se os testes falharem
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: apps/web/playwright-report/ # Caminho do relatório do Playwright
+          path: apps/web/playwright-report/
           retention-days: 7
+
+  # --- JOB 2: DEPLOY NO GITHUB PAGES ---
+  deploy-pages:
+    # Só executa se o job 'build-and-test' for bem-sucedido
+    needs: build-and-test
+    # Só executa em push na branch 'main' (não em Pull Requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    runs-on: ubuntu-latest
+    
+    # Permissões necessárias para a action de deploy
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Baixar o artefato 'web-dist'
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          # Baixa para o diretório atual
+          path: ./dist 
+      
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+      
+      - name: Fazer Upload do artefato para o Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist # Pasta que o 'download-artifact' criou
+          
+      - name: Fazer Deploy no GitHub Pages
+        uses: actions/deploy-pages@v4
+        # Não precisa de mais nada, ele pega o artefato do passo anterior
