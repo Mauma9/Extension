@@ -14,7 +14,7 @@ test('Busca por cidade deve funcionar (com mock)', async ({ page }) => {
   // --- Início do Mock (Chamada 1: Geocodificação) ---
   // Intercepta a chamada para a API PÚBLICA de geocodificação
   await page.route(
-    'https://geocoding-api.open-meteo.com/v1/search?name=**', // URLs que começam com isso
+    'https://geocoding-api.open-meteo.com/v1/search**', // URLs que começam com isso
     async (route) => {
       console.log(`[Mock] Interceptando chamada de Geocodificação: ${route.request().url()}`);
       
