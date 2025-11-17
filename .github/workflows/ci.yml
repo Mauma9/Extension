@@ -39,6 +39,14 @@ jobs:
       - name: Subir Contêineres (API e Web)
         run: docker compose up -d
 
+      - name: Aguardar API ficar pronta
+        run: |
+          echo "Aguardando 10 segundos pela inicialização dos serviços..."
+          sleep 10
+          echo "Verificando logs dos contêineres:"
+          docker compose logs api
+          docker compose logs web
+
       - name: Executar Testes E2E (Playwright)
         run: npm run test:e2e
         working-directory: ./apps/web
