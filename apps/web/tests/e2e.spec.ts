@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// O Playwright usa a 'baseURL' definida no playwright.config.ts
 test('PWA carrega e tem o título correto', async ({ page }) => {
   // page.goto('/') navega para a baseURL (http://localhost:8080)
   await page.goto('/');
@@ -9,16 +8,19 @@ test('PWA carrega e tem o título correto', async ({ page }) => {
   await expect(page).toHaveTitle(/PWA de Clima/);
 });
 
-// --- TESTE ATUALIZADO COM MOCK ---
+// --- TESTE ATUALIZADO COM O MOCK CORRETO ---
 test('Busca por cidade deve funcionar (com mock)', async ({ page }) => {
   
   // --- Início do Mock ---
-  // Intercepta a chamada de rede para a API PÚBLICA de clima
+  // Intercepta a chamada para a NOSSA API /api/search
+  // Usamos 'http://localhost:3000' porque é isso que o main.js usa no CI
   await page.route(
-    'https://api.open-meteo.com/v1/forecast**', // Intercepta qualquer URL que comece com isso
+    'http://localhost:3000/api/search?city=São%20Paulo', // A URL exata
     async (route) => {
       // Cria uma resposta JSON falsa (mock)
       const mockResponse = {
+        name: 'São Paulo',
+        admin1: 'SP (Mock)', // Adicionado (Mock) para termos certeza
         current_weather: {
           temperature: 25.0, // Temperatura Fictícia
           weathercode: 3,    // 3 = Nublado
@@ -35,23 +37,18 @@ test('Busca por cidade deve funcionar (com mock)', async ({ page }) => {
   );
   // --- Fim do Mock ---
 
-  // O teste continua normal, mas agora usará a resposta falsa
   await page.goto('/');
   
-  const input = page.locator('#city-input');
-  const button = page.locator('#search-button');
-  
-  // A chamada para a NOSSA api (/api/search) ainda funciona (ela bate no contêiner api)
-  await input.fill('São Paulo');
-  await button.click();
+  await page.locator('#city-input').fill('São Paulo');
+  await page.locator('#search-button').click();
 
-  // A segunda chamada (para api.open-meteo.com) será interceptada pelo mock
+  // O PWA receberá os dados do MOCK
   const resultHeader = page.locator('#weather-result h2');
   const temperature = page.locator('.temperature');
   const condition = page.locator('.condition');
 
   // Verifica se o PWA renderizou os dados do MOCK
-  await expect(resultHeader).toContainText('São Paulo', { timeout: 5000 }); // Pode ser rápido agora
+  await expect(resultHeader).toContainText('São Paulo, SP (Mock)', { timeout: 5000 });
   await expect(temperature).toContainText('25.0°C'); // Dado do mock
   await expect(condition).toContainText('Nublado'); // Dado do mock (código 3)
 });
