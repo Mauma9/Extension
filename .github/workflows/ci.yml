@@ -1,15 +1,18 @@
+# Nome do Workflow
 name: CI/CD - PWA Bootcamp
 
+# Gatilhos
 on:
   push:
-    branches: [ main ] # Gatilho para deploy
+    branches: [ main ]
   pull_request:
-    branches: [ main ] # Gatilho para testes
+    branches: [ main ]
 
+# Definição dos trabalhos
 jobs:
-  # --- JOB 1: CONSTRUIR E TESTAR (NO DOCKER) ---
   build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -37,15 +40,33 @@ jobs:
         run: docker compose build
 
       - name: Subir Contêineres (API e Web)
-        run: docker compose up -d
+        run: docker compose up -d # -d (detached) roda em segundo plano
 
-      - name: Aguardar API ficar pronta
+      # --- MUDANÇA IMPORTANTE AQUI ---
+      # Substituímos o 'sleep 10' por um 'health check' ativo
+      - name: Aguardar API (Health Check)
         run: |
-          echo "Aguardando 10 segundos pela inicialização dos serviços..."
-          sleep 10
-          echo "Verificando logs dos contêineres:"
+          echo "Aguardando API em http://localhost:3000..."
+          timeout=60 # Timeout de 60 segundos
+          end_time=$(( $(date +%s) + timeout ))
+          
+          # Tenta se conectar à API (rota /api/search) em loop
+          # O curl vai falhar (retornar código > 0) até o servidor responder
+          while ! curl -s --fail http://localhost:3000/api/search > /dev/null; do
+            if [[ $(date +%s) -gt $end_time ]]; then
+              echo "Erro: Timeout! API não subiu em $timeout segundos."
+              echo "--- LOGS DA API ---"
+              docker compose logs api
+              exit 1
+            fi
+            echo -n "." # Imprime um ponto a cada 2 segundos
+            sleep 2
+          done
+          
+          echo "API está pronta!"
+          echo "--- LOGS FINAIS DA API ---"
           docker compose logs api
-          docker compose logs web
+      # --- FIM DA MUDANÇA ---
 
       - name: Executar Testes E2E (Playwright)
         run: npm run test:e2e
@@ -55,11 +76,13 @@ jobs:
         if: always() 
         run: docker compose down
 
+      # --- Upload de Artefatos ---
       - name: Construir PWA (para Artefato)
         run: npm run build
         working-directory: ./apps/web
 
       - name: Publicar Artefato (web-dist)
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
@@ -72,38 +95,3 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
-
-  # --- JOB 2: DEPLOY NO GITHUB PAGES ---
-  deploy-pages:
-    # Só executa se o job 'build-and-test' for bem-sucedido
-    needs: build-and-test
-    # Só executa em push na branch 'main' (não em Pull Requests)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    runs-on: ubuntu-latest
-    
-    # Permissões necessárias para a action de deploy
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    steps:
-      - name: Baixar o artefato 'web-dist'
-        uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          # Baixa para o diretório atual
-          path: ./dist 
-      
-      - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v5
-      
-      - name: Fazer Upload do artefato para o Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist # Pasta que o 'download-artifact' criou
-          
-      - name: Fazer Deploy no GitHub Pages
-        uses: actions/deploy-pages@v4
-        # Não precisa de mais nada, ele pega o artefato do passo anterior
