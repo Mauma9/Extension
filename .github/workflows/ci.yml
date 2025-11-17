@@ -40,10 +40,10 @@ jobs:
         run: docker compose build
 
       - name: Subir Contêineres (API e Web)
-        run: docker compose up -d # -d (detached) roda em segundo plano
+        run: docker compose up -d
 
       # --- MUDANÇA IMPORTANTE AQUI ---
-      # Substituímos o 'sleep 10' por um 'health check' ativo
+      # Removemos a flag '--fail' do curl
       - name: Aguardar API (Health Check)
         run: |
           echo "Aguardando API em http://localhost:3000..."
@@ -51,8 +51,9 @@ jobs:
           end_time=$(( $(date +%s) + timeout ))
           
           # Tenta se conectar à API (rota /api/search) em loop
-          # O curl vai falhar (retornar código > 0) até o servidor responder
-          while ! curl -s --fail http://localhost:3000/api/search > /dev/null; do
+          # SEM '--fail': O curl agora aceita a resposta 400 (Bad Request) como um SUCESSO
+          # pois o servidor respondeu.
+          while ! curl -s http://localhost:3000/api/search > /dev/null; do
             if [[ $(date +%s) -gt $end_time ]]; then
               echo "Erro: Timeout! API não subiu em $timeout segundos."
               echo "--- LOGS DA API ---"
