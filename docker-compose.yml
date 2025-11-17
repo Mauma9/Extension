@@ -13,6 +13,13 @@ services:
       # Mapeia a porta 3000 do contêiner para a porta 3000 da sua máquina (host)
       # Formato: "HOST:CONTAINER"
       - "3000:3000"
+    
+    # --- CORREÇÃO IMPORTANTE ---
+    # Força o contêiner a usar um DNS público e confiável (Google)
+    # Isso corrige erros de rede/timeout (ETIMEDOUT) dentro do Docker.
+    dns:
+      - 8.8.8.8
+
     # Reinicia o contêiner automaticamente se ele falhar
     restart: unless-stopped
 
@@ -24,11 +31,10 @@ services:
     ports:
       # Mapeia a porta 80 (padrão Nginx) do contêiner para a porta 8080 da sua máquina (host)
       - "8080:80"
-    environment:
-      # Passa a URL da API para o PWA (Vite)
-      # Dentro da rede Docker, o 'web' não usa 'localhost',
-      # ele usa o nome do serviço: 'http://api:3000'
-      - VITE_API_URL=http://api:3000
+    # A variável VITE_API_URL foi removida para que o frontend use
+    # o 'http://localhost:3000' (definido no main.js), que é o correto
+    # para a comunicação navegador -> host -> contêiner.
+    
     # Garante que o serviço 'api' inicie ANTES do serviço 'web'
     depends_on:
       - api

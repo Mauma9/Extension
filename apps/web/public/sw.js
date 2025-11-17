@@ -2,8 +2,6 @@ const CACHE_NAME = 'clima-pwa-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/style.css',
-  '/main.js', // O Vite geralmente compila para main.js ou index.js
   '/manifest.webmanifest',
   '/icons/icon-192.png'
 ];

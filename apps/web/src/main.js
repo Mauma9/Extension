@@ -1,9 +1,9 @@
 import './style.css';
 
-// URL da NOSSA API (o backend que criamos na Ação 1)
-// O Vite usará VITE_API_URL em produção (definido no Docker Compose)
-// Em desenvolvimento (npm run dev), usará o localhost:3000
+// URL da NOSSA API (o backend)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// URL da API PÚBLICA (que o navegador vai chamar)
+const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
 const cityInput = document.getElementById('city-input');
 const searchButton = document.getElementById('search-button');
@@ -21,7 +21,7 @@ async function getWeather() {
   weatherResultDiv.innerHTML = `<p>Buscando...</p>`;
 
   try {
-    // Passo 1: Buscar coordenadas (Geocodificação) em NOSSA API
+    // --- PASSO 1: Buscar coordenadas no NOSSO backend ---
     const geoResponse = await fetch(`${API_URL}/api/search?city=${city}`);
     if (!geoResponse.ok) {
       throw new Error('Cidade não encontrada.');
@@ -30,18 +30,22 @@ async function getWeather() {
     
     const { latitude, longitude, name, admin1 } = location;
 
-    // Passo 2: Buscar clima usando as coordenadas em NOSSA API
-    const weatherResponse = await fetch(`${API_URL}/api/weather?lat=${latitude}&lon=${longitude}`);
+    // --- PASSO 2: Buscar clima na API PÚBLICA (do navegador) ---
+    const weatherURL = `${WEATHER_API_URL}?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+    console.log("Buscando clima em:", weatherURL); // Log para o console F12
+
+    const weatherResponse = await fetch(weatherURL);
     if (!weatherResponse.ok) {
       throw new Error('Não foi possível obter o clima.');
     }
-    const weather = await weatherResponse.json();
+    const weatherData = await weatherResponse.json();
 
     // Passo 3: Exibir os resultados
-    displayWeather(weather, name, admin1);
+    displayWeather(weatherData.current_weather, name, admin1);
 
   } catch (error) {
     weatherResultDiv.innerHTML = `<p class="error">${error.message}</p>`;
+    console.error("Erro ao buscar clima:", error); // Log para o console F12
   }
 }
 
@@ -57,7 +61,7 @@ function displayWeather(weather, city, region) {
   weatherResultDiv.innerHTML = html;
 }
 
-// Função auxiliar para traduzir códigos do Open-Meteo
+// (A função getWeatherCondition continua igual)
 function getWeatherCondition(code) {
   const conditions = {
     0: 'Céu limpo', 1: 'Quase limpo', 2: 'Parcialmente nublado', 3: 'Nublado',
